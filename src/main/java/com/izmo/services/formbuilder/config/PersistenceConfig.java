@@ -1,11 +1,10 @@
-package com.izmo.service.forms.config;
+package com.izmo.services.formbuilder.config;
 
 import java.util.Properties;
 
 import javax.persistence.EntityManagerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -24,16 +23,15 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.izmo.core.forms.dao", entityManagerFactoryRef = "entityManagerFactory", transactionManagerRef = "transactionManager")
-@EntityScan(basePackages = "com.izmo.core.model")
+@EnableJpaRepositories(basePackages = { "com.izmo.core.dao","com.izmo.core.**.**.dao" }, entityManagerFactoryRef = "entityManagerFactory", transactionManagerRef = "transactionManager")
+@EntityScan(basePackages = "com.izmo.core.entity")
 @EnableTransactionManagement
-//@EnableAutoConfiguration
-public class ApplicationConfig {
+// @EnableAutoConfiguration
+public class PersistenceConfig {
 
 	@Autowired
-    private Environment env;
+	private Environment env;
 
-	
 	@Bean
 	@ConfigurationProperties("spring.datasource")
 	public HikariDataSource dataSource() {
@@ -46,30 +44,31 @@ public class ApplicationConfig {
 		emf.setDataSource(dataSource());
 		emf.setJpaVendorAdapter(jpaVendorAdapter());
 		emf.setJpaProperties(additionalProperties());
-		emf.setPackagesToScan(new String[] { "com.izmo.core.model" });
-		emf.setPersistenceUnitName("web_platform");
+		emf.setPackagesToScan(new String[] { "com.izmo.core.entity" });
+		emf.setPersistenceUnitName("sessionFactory");
 		emf.afterPropertiesSet();
 		return emf.getObject();
 	}
 
 	final Properties additionalProperties() {
-        final Properties hibernateProperties = new Properties();
-        hibernateProperties.setProperty("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
-        hibernateProperties.setProperty("hibernate.show_sql", "true");
-        hibernateProperties.setProperty("hibernate.dialect", env.getProperty("spring.jpa.properties.hibernate.dialect"));
-        return hibernateProperties;
-    }
-	
+		final Properties hibernateProperties = new Properties();
+		hibernateProperties.setProperty("hibernate.hbm2ddl.auto", env.getProperty("spring.jpa.hibernate.ddl-auto"));
+		hibernateProperties.setProperty("hibernate.show_sql", env.getProperty("spring.jpa.hibernate.show_sql"));
+		hibernateProperties.setProperty("hibernate.dialect",
+				env.getProperty("spring.jpa.properties.hibernate.dialect"));
+		return hibernateProperties;
+	}
+
 	@Bean
 	public JpaVendorAdapter jpaVendorAdapter() {
 		return new HibernateJpaVendorAdapter();
 	}
 
 	@Bean
-    public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
-        return new PersistenceExceptionTranslationPostProcessor();
-    }
-	
+	public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
+		return new PersistenceExceptionTranslationPostProcessor();
+	}
+
 	@Bean(name = "transactionManager")
 	public PlatformTransactionManager transactionManager(EntityManagerFactory emf) {
 		JpaTransactionManager transactionManager = new JpaTransactionManager();
